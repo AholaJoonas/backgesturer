@@ -20,7 +20,7 @@ function backGesturer(elems, options) {
 		bttn2Callback: function(evt) {
 			evt.stopPropagation();
 			console.log("button2 pressed");
-		}
+		},
 	};
 
 	this.startEvents = {
@@ -39,7 +39,8 @@ function backGesturer(elems, options) {
 	};
 
 
-	this.correctTransform = this.use3dTransforms() || "left";
+	this.correctTransform = options.hwAcceleration === false ? "left" : this.useTransforms() || "left";
+	this.hwTrans = this.use3dTransforms() ?  " translateZ(0)" : "";
 	this.rFrame = this.normalizeAnimationFrame();
 	console.log(this.correctTransform);
 
@@ -58,14 +59,36 @@ function backGesturer(elems, options) {
 };
 
 backGesturer.prototype = {
+
 	addButtons: function() {
-		if(!this.elems[0].querySelectorAll(".backgesture-button-wrapper").length) {
-			var i = 0, l = this.elems.length;
+		var i = 0, l = this.elems.length;
 
-			for(;i<l;i++) {
-				var e = this.elems[i];
+		for(;i<l;i++) {
+			var e = this.elems[i];
+			if(!e.querySelectorAll(".backgesture-button-wrapper").length) {
 				e.appendChild(this.createButtonsWrapper());
+			}
+		}
+	},
 
+	addContentWrapper: function() {
+		var i = 0, l = this.elems.length;
+
+		for(;i<l;i++) {
+			var e = this.elems[i];
+			if(!e.querySelectorAll(".backgesture-content-wrapper").length) {
+				this.createContentWrapper(e);
+			}
+		}
+	},
+
+	addStyles: function() {
+		var i = 0, l = this.elems.length;
+
+		for(;i<l;i++) {
+			var e = this.elems[i];
+			if(this.correctTransform !== "left") {
+				e.style[this.correctTransform] === "translateZ(0)";
 			}
 		}
 	},
@@ -127,6 +150,41 @@ backGesturer.prototype = {
 		window.backGesturer.options.bttn2Callback.apply(this, [evt]);
 	},
 
+	createButtonsWrapper: function() {
+		var buttons = document.createElement("div"),
+			button1 = document.createElement("div"),
+			button2 = document.createElement("div");
+
+		buttons.className += " backgesture-button-wrapper";
+
+		button1.className += " backgesture-button backgesture-button1";
+		button1.innerHTML = "<span>"+this.options.button1Text+"</span>";
+
+		button2.className += " backgesture-button backgesture-button2";
+		button2.innerHTML = "<span>"+ this.options.button2Text +"</span>";
+
+		buttons.appendChild(button1);
+		buttons.appendChild(button2);
+
+		return buttons;
+	},
+
+	createContentWrapper: function(e) {
+		var eContent = e.children,
+			contentWrapper = document.createElement("div");
+
+		contentWrapper.className += " backgesture-content-wrapper";
+		if(eContent.length) {
+			while(eContent.length) {
+				contentWrapper.appendChild(eContent[0]);
+			}
+			e.appendChild(contentWrapper)
+		}else {
+			e.appendChild(contentWrapper);
+		}
+
+	},
+
 	determineWhichSnap: function() {
 		console.log("determineWhichSnap");
 
@@ -147,11 +205,15 @@ backGesturer.prototype = {
 				0;
 
 		}else {
-			return parseInt(this.style[window.backGesturer.correctTransform].split("p")[0], 10);
+			return  this.style[window.backGesturer.correctTransform] ? 
+						parseInt(this.style[window.backGesturer.correctTransform].split("p")[0], 10)
+						:
+						0;
 		}
 	},
 
 	init: function() {
+		this.addContentWrapper();
 		this.addButtons();
 		this.attachToElems();
 	},
@@ -168,12 +230,12 @@ backGesturer.prototype = {
 
 		//If user is dragging to the left
 	    if(curAmount >= 0 && correctAmount >= 0) {
-	    	contentWrapper.style[prefixedTransform] = "translate3d(0px,0,0)";
+	    	contentWrapper.style[prefixedTransform] = "translate(0,0)"+context.hwTrans;
 	    	return;
 	    }
 
 		if(prefixedTransform !== "left") {
-			contentWrapper.style[prefixedTransform] = "translate3d("+correctAmount+"px,0,0)";
+			contentWrapper.style[prefixedTransform] = "translate("+correctAmount+"px,0)"+context.hwTrans;
 		}else {
 			contentWrapper.style[prefixedTransform] = correctAmount+"px";
 		}
@@ -230,8 +292,8 @@ backGesturer.prototype = {
 			origY = context.startY,
 			currentX = evt.pageX,
 			currentY = evt.pageY,
-			correctDir = Math.abs(startY - currentY) < 5,
 			amountMoved = Math.abs(startX - currentX),
+			correctDir = Math.abs(startY - currentY) < amountMoved,
 			isClick = evt.timeStamp - context.stStamp < 150 && Math.abs(origX - currentX) < 5,
 			dirPrefix = startX - currentX > 0 ? "-" : "";
 			amountMoved = dirPrefix+amountMoved;
@@ -255,25 +317,6 @@ backGesturer.prototype = {
 			context.determineWhichSnap.apply(context.currentElement, []);
 			return;
 		}
-	},
-
-	createButtonsWrapper: function(el) {
-		var buttons = document.createElement("div"),
-			button1 = document.createElement("button"),
-			button2 = document.createElement("button");
-
-		buttons.className = " backgesturer-button-wrapper";
-
-		button1.className += " backgesturer-button1";
-		button1.textContent += this.options.button1Text;
-
-		button2.className += " backgesturer-button2";
-		button2.textContent += this.options.button2Text;
-
-		buttons.appendChild(button1);
-		buttons.appendChild(button2);
-
-		return buttons;
 	},
 
 	resetCurrentElement: function() {
@@ -328,7 +371,11 @@ backGesturer.prototype = {
 				}
 				return;
 			}
-			that.style[window.backGesturer.correctTransform] = "translate3d("+currentX+"px, 0, 0)";
+			if(context.correctTransform !== "left") {
+				that.style[context.correctTransform] = "translate("+currentX+"px, 0)"+context.hwTrans;
+			}else {
+				that.style[context.correctTransform] = currentX+"px";
+			}
 			window.backGesturer.rFrame.call(window, snapTo);
 		};
 		window.backGesturer.rFrame.call(window, snapTo);
@@ -336,10 +383,9 @@ backGesturer.prototype = {
 
 	},
 
-	use3dTransforms: function() {
+	useTransforms: function() {
 		var transforms = {
             "webkitTransform": "-webkit-transform",
-            "OTransform": "-o-transform",
             "msTransform": "-ms-transform",
             "MozTransform": "-moz-transform",
             "transform": "transform"
@@ -347,9 +393,20 @@ backGesturer.prototype = {
 		return this.testStyles(transforms);
 	},
 
+	use3dTransforms: function() {
+		var transforms = {
+            "webkitPerspective": "-webkit-perspective",
+            "msPerspective": "-ms-perspective",
+            "MozPerspective": "-moz-perspective",
+            "perspective": "perspective"
+    	};
+		return this.testStyles(transforms);
+	},
+
+
 	testStyles: function(styles) {
 		for(var x in styles) {
-			if (document.body.style[x] !== undefined) {
+			if (this.bodyStyles[x] !== undefined) {
 				return x;
 			}
 		}

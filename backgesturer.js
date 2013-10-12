@@ -8,51 +8,49 @@ function backGesturer(elems, options) {
 		return false;
 	}
 
-	this.bodyStyles = document.body.style; //Cache
+	this.bodyStyles = document.body.style; //Cache styles
 
 	this.options = {
-		button1Text: "More",
-		button2Text: "Delete",
-		bttn1Callback: function(evt) {
+		button1Callback: function(evt) {
 			evt.stopPropagation();
 			console.log("button1 pressed");
 		},
-		bttn2Callback: function(evt) {
+		button2Callback: function(evt) {
 			evt.stopPropagation();
 			console.log("button2 pressed");
 		},
+		touchEnabled: "ontouchstart" in window,
+		pointersEnabled: navigator.msPointerEnabled
 	};
 
-	this.startEvents = {
-		"mousedown": "mousedown",
-		"touchstart": "touchstart",
-	};
+	for(var x in options) {
+		this.options[x] = options[x];
+	}
 
-	this.moveEvents = {
-		"mousemove": "mousemove",
-		"touchmove": "touchmove"
-	};
+	this.startEvents = ["mousedown"];
+	this.moveEvents = ["mousemove"];
+	this.stopEvents = ["mouseup"];
 
-	this.stopEvents = {
-		"mouseup": "mouseup",
-		"touchend": "touchend"
-	};
-
+	if (this.options.touchEnabled) {
+		this.startEvents.push("touchstart");
+		this.moveEvents.push("touchmove");
+		this.stopEvents.push("touchend");
+	}
+	if(this.options.pointersEnabled) {
+		this.startEvents.push("MSPointerDown");
+		this.moveEvents.push("MSPointerMove");
+		this.stopEvents.push("MSPointerUp");
+	}
 
 	this.correctTransform = options.hwAcceleration === false ? "left" : this.useTransforms() || "left";
-	this.hwTrans = this.use3dTransforms() ?  " translateZ(0)" : "";
+	this.hwTrans = options.hwAcceleration === false ? "" : this.use3dTransforms() ?  " translateZ(0)" : "";
 	this.rFrame = this.normalizeAnimationFrame();
-	console.log(this.correctTransform);
 
 	//coordinates
 	this.startX = 0,
 	this.startY = 0;
 	this.currentX = 0;
 	this.currentY = 0;
-
-	for(var x in options) {
-		this.options[x] = options[x];
-	}
 
 	this.init();
 	window.backGesturer = this;
@@ -105,34 +103,34 @@ backGesturer.prototype = {
 		var button1 = this.currentElement.querySelector(".backgesture-button1"),
 			button2 = this.currentElement.querySelector(".backgesture-button2");
 
-		this.bindEvents(button1, {"click" : "click"}, this.button1Clicked, true);
-		this.bindEvents(button2, {"click" : "click"}, this.button2Clicked, true);
+		this.bindEvents(button1, ["click"], this.button1Clicked, true);
+		this.bindEvents(button2, ["click"], this.button2Clicked, true);
 	},
 
 	unbindButtons: function() {
 		var button1 = this.currentElement.querySelector(".backgesture-button1"),
 			button2 = this.currentElement.querySelector(".backgesture-button2");
 
-		this.unbindEvents(button1, {"click" : "click"}, this.button1Clicked, true);
-		this.unbindEvents(button2, {"click" : "click"}, this.button2Clicked, true);
+		this.unbindEvents(button1, ["click"], this.button1Clicked, true);
+		this.unbindEvents(button2, ["click"], this.button2Clicked, true);
 	},
 
 	bindEvents: function(elem, events, callback, capture) {
 		var elems = elem ? elem : this.elems;
 
-		console.dir(elem);
+		console.dir(events);
 
-		for(var x in events) {
-			elems.addEventListener(events[x], callback, capture);
-		}
+		events.forEach(function(event){
+			elems.addEventListener(event, callback, capture);
+		});
 	},
 
 	unbindEvents: function(elem, events, callback, capture) {
 		var elems = elem ? elem : this.elems;
 
-		for(var x in events) {
-			elems.removeEventListener(events[x], callback, capture);
-		}
+		events.forEach(function(event){
+			elems.removeEventListener(event, callback, capture);
+		});
 	},
 
 	bindStartEvent: function(elem) {
@@ -142,18 +140,28 @@ backGesturer.prototype = {
 
 	button1Clicked: function(evt) {
 		evt.stopPropagation();
-		window.backGesturer.options.bttn1Callback.apply(this, [evt]);
+		window.backGesturer.options.button1Callback.apply(this, [evt]);
 	},
 
 	button2Clicked: function(evt) {
 		evt.stopPropagation();
-		window.backGesturer.options.bttn2Callback.apply(this, [evt]);
+		window.backGesturer.options.button2Callback.apply(this, [evt]);
 	},
 
 	createButtonsWrapper: function() {
 		var buttons = document.createElement("div"),
 			button1 = document.createElement("div"),
-			button2 = document.createElement("div");
+			button2 = document.createElement("div"),
+			button1Text = this.options.button1Text,
+			button2Text = this.options.button2Text;
+
+		if(!button1Text || !button2Text) {
+			throw {
+				name: "ButtonError",
+				message: "No text for button 1 or 2",
+				toString: function(){return this.name + ": " + this.message} 
+			}
+		}
 
 		buttons.className += " backgesture-button-wrapper";
 
@@ -293,7 +301,7 @@ backGesturer.prototype = {
 			currentX = evt.pageX,
 			currentY = evt.pageY,
 			amountMoved = Math.abs(startX - currentX),
-			correctDir = Math.abs(startY - currentY) < amountMoved,
+			correctDir = Math.abs(origY - currentY) < 25,
 			isClick = evt.timeStamp - context.stStamp < 150 && Math.abs(origX - currentX) < 5,
 			dirPrefix = startX - currentX > 0 ? "-" : "";
 			amountMoved = dirPrefix+amountMoved;

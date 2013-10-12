@@ -1,7 +1,7 @@
 #backgesturer
 
 
-iOS-styled back-gestures to elements
+iOS-styled back-gestures to elements, aimed for webapps
 
 Usage:
 
@@ -52,6 +52,16 @@ Possible values for the paramsObject:
 		</li>
 
 In case you use backgesturer on an element with no .backgesture-content-wrapper or .backgesture-button-wrapper, it will be generated, but the performance will be poor. Especially in a large node-collection.
+
+##Browser support
+Should work on all modern browsers, but please note that I made this primarily for mobile-webapps.
+###Tested on
+
+1. iPad 3 and iPhone 5 with iOS 7
+2. latest Chrome, 30.0
+3. Latest Firefox, 24.0
+4. Opera 12.16 and 17.0
+5. IE 9, but has some minor bugs, like buttons not always working
 
 ##TODO:
 1. Solve the context-problem (More than one instance of backgesturer --> explosions)

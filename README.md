@@ -27,6 +27,7 @@ Possible values for the paramsObject:
     
     ##Info
     For best performance, use the following structure in the elements you use backgesture on:
+
         wrapper
             .backgesture-content-wrapper (contains the actual visible content of the element)
             .backgesture-button-wrapper
@@ -50,7 +51,7 @@ Possible values for the paramsObject:
             </div>
 		</li>
 
-In case you use backgesturer on an element with no .backgesture-content-wrapper or .backgesture-button-wrapper, it will be generated, but the performance will be poor, especially in a large node-collection.
+In case you use backgesturer on an element with no .backgesture-content-wrapper or .backgesture-button-wrapper, it will be generated, but the performance will be poor. Especially in a large node-collection.
 
 ##TODO:
 1. Solve the context-problem (More than one instance of backgesturer --> explosions)

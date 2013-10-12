@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>Backgesturer by AholaJoonas</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1>Backgesturer</h1>
+          <h2>iOS-styles back-gestures to elements</h2>
+        </header>
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/AholaJoonas/backgesturer/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/AholaJoonas/backgesturer/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/AholaJoonas/backgesturer" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <section id="main_content">
+          <h1>
+<a name="backgesturer" class="anchor" href="#backgesturer"><span class="octicon octicon-link"></span></a>backgesturer</h1>
+
+<p>iOS-styled back-gestures to elements, aimed for webapps</p>
+
+<p>Usage:</p>
+
+<pre><code>new backGesturer( (&lt;DOM nodelist&gt; || css-selector), paramsObject{})
+
+example:
+var backgest = new backGesturer(".back-gesturized", {
+    bttn1Callback: function(evt) {alert("I'm button 1 and this is my favourite button in the citadel")},
+    bttn2Callback: function(evt) {alert("I'm button 2 and this is my favourite button in the citadel")}
+}); 
+</code></pre>
+
+<p>Possible values for the paramsObject:</p>
+
+<ol>
+<li>
+<p>"button1Callback" &amp;&amp; "button2Callback" : function - <em>required</em> </p>
+
+<blockquote>
+<p>callback-functions for when pressing the buttons, they receive the event as a parameter and their context is the DOM-node of the pressed button.</p>
+</blockquote>
+</li>
+<li>
+<p>"button1Text" &amp;&amp; "button2Text": string - <em>required if you are generating the buttons with backGesturer</em></p>
+
+<blockquote>
+<p>Text-labels for the buttons, the string is wrapped in a span-element, can be HTML.</p>
+</blockquote>
+</li>
+<li>
+<p>"hwAcceleration": true || false,  <em>default: true</em></p>
+
+<blockquote>
+<p>If you set this to false, The CSS-property "left" will be used instead of detecting transitions.
+If you're on a browser that doesn't support transitions, left will also be used</p>
+</blockquote>
+
+<h2>
+<a name="info" class="anchor" href="#info"><span class="octicon octicon-link"></span></a>Info</h2>
+
+<p>For best performance, use the following structure in the elements you use backgesture on:</p>
+
+<pre><code>wrapper
+    .backgesture-content-wrapper (contains the actual visible content of the element)
+    .backgesture-button-wrapper
+        .backgesture-button.backgesture-button1
+            span "buttontitle"
+        .backgesture-button..backgesture-button2
+            span "buttontitle
+
+for example:
+&lt;li class="back-gesturized"&gt;
+    &lt;div class="backgesture-content-wrapper"&gt;
+        Lorem ipsum asd asd
+    &lt;/div&gt;
+    &lt;div class="backgesture-button-wrapper"&gt;
+        &lt;div class="backgesture-button backgesture-button1"&gt;
+            &lt;span&gt;Button 1&lt;/span&gt;
+        &lt;/div&gt;
+        &lt;div class="backgesture-button2 backgesture-button"&gt;
+            &lt;span&gt;Delete&lt;/span&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/li&gt;
+</code></pre>
+</li>
+</ol><p>In case you use backgesturer on an element with no .backgesture-content-wrapper or .backgesture-button-wrapper, it will be generated, but the performance will be poor. Especially in a large node-collection.</p>
+
+<h2>
+<a name="browser-support" class="anchor" href="#browser-support"><span class="octicon octicon-link"></span></a>Browser support</h2>
+
+<p>Should work on all modern browsers, but please note that I made this primarily for mobile-webapps.</p>
+
+<h3>
+<a name="tested-on" class="anchor" href="#tested-on"><span class="octicon octicon-link"></span></a>Tested on</h3>
+
+<ol>
+<li>iPad 3 and iPhone 5 with iOS 7</li>
+<li>latest Chrome, 30.0</li>
+<li>Latest Firefox, 24.0</li>
+<li>Opera 12.16 and 17.0</li>
+<li>IE 9, but has some minor bugs, like buttons not always working</li>
+</ol><h2>
+<a name="todo" class="anchor" href="#todo"><span class="octicon octicon-link"></span></a>TODO:</h2>
+
+<ol>
+<li>Solve the context-problem (More than one instance of backgesturer --&gt; explosions)</li>
+<li>Move all the styles to the JS so no additional CSS-files required (necessary?)</li>
+<li>Improve the code-quality...</li>
+</ol>
+        </section>
+
+        <footer>
+          Backgesturer is maintained by <a href="https://github.com/AholaJoonas">AholaJoonas</a><br>
+          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
+    </div>
+  </body>
+</html>

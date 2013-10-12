@@ -13,7 +13,8 @@ Usage:
 		bttn2Callback: function(evt) {alert("I'm button 2 and this is my favourite button in the citadel")}
 	});	
     
-Possible values for the paramsObject: 
+Possible values for the paramsObject:
+
 1. "button1Callback" && "button2Callback" : function - _required_ 
    > callback-functions for when pressing the buttons, they receive the event as a parameter and their context is the DOM-node of the pressed button.
 
@@ -22,7 +23,6 @@ Possible values for the paramsObject:
 
 3. "hwAcceleration": true || false,  _default: true_
     > If you set this to false, The CSS-property "left" will be used instead of detecting transitions.
-
     > If you're on a browser that doesn't support transitions, left will also be used
     
     ##Info

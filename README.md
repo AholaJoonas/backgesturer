@@ -1,6 +1,5 @@
 #backgesturer
 
-
 iOS-styled back-gestures to elements, aimed for webapps
 
 Usage:
@@ -64,7 +63,7 @@ Should work on all modern browsers, but please note that I made this primarily f
 5. IE 9, but has some minor bugs, like buttons not always working
 
 ##TODO:
-1. Solve the context-problem (More than one instance of backgesturer --> explosions)
+1. Solve the context-problem (More than one instance of backgesturer --> explosions) -- Should be fixed
 2. Move all the styles to the JS so no additional CSS-files required (necessary?)
 3. Improve the code-quality...
     

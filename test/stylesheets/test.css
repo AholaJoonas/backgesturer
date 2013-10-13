@@ -1,0 +1,14 @@
+/* line 1, ../../sass/test.scss */
+li {
+  width: 300px;
+  border: 1px solid #408080;
+  display: block;
+  overflow: hidden;
+  -ms-text-overflow: ellipsis;
+  text-overflow: ellipsis;
+  background-color: #FBEDC8;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}

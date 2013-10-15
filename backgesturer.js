@@ -6,6 +6,7 @@ function backGesturer(elems, options) {
 	this.elems =  typeof elems === "string" ? document.querySelectorAll(elems) : elems;
 	
 	if(!this.elems || !this.elems.length) {
+	    alert("returning false");
 		return false;
 	}
 
@@ -19,7 +20,8 @@ function backGesturer(elems, options) {
 			evt.stopPropagation();
 		},
 		touchEnabled: "ontouchstart" in window,
-		pointersEnabled: navigator.msPointerEnabled
+		pointersEnabled: navigator.msPointerEnabled,
+		isAndroid: navigator.userAgent.match(/Android/i)
 	};
 
 	for(var x in options) {
@@ -59,8 +61,8 @@ function backGesturer(elems, options) {
 	this.eventHandlers = {
 
 		onMoveStart: function(evt) {
-			var startX = evt.pageX,
-				startY = evt.pageY,
+			var startX = evt.touches[0].pageX,
+				startY = evt.touches[0].pageY,
 				context = thisRef,
 				that = this;
 
@@ -93,19 +95,22 @@ function backGesturer(elems, options) {
 		},
 
 		onMove: function(evt) {
+		    if( thisRef.options.isAndroid ) {
+		      evt.preventDefault();
+		    }
 			var context = thisRef,
 				startX = context.currentX,
 				startY = context.currentY,
 				origX = context.startX,
 				origY = context.startY,
-				currentX = evt.pageX,
-				currentY = evt.pageY,
+				currentX = evt.touches[0].pageX,
+				currentY = evt.touches[0].pageY,
 				amountMoved = Math.abs(startX - currentX),
 				correctDir = Math.abs(origY - currentY) < 25,
 				isClick = evt.timeStamp - context.stStamp < 150 && Math.abs(origX - currentX) < 5,
 				dirPrefix = startX - currentX > 0 ? "-" : "";
 				amountMoved = dirPrefix+amountMoved;
-
+            
 			if(correctDir && !isClick && !context.isTranslating && Math.abs(amountMoved) > 0) {
 				evt.preventDefault();
 				context.moveContentWrapper(amountMoved);
@@ -120,8 +125,7 @@ function backGesturer(elems, options) {
 
 		onMoveEnd: function(evt) {
 			var context = thisRef,
-				isClick = evt.timeStamp - context.stStamp < 150 && Math.abs(context.startX - evt.pageX) < 5;
-
+				isClick = evt.timeStamp - context.stStamp < 150 && Math.abs(context.startX - evt.changedTouches[0].pageX) < 5;
 		    context.unbindEvents(context.currentElement, context.moveEvents, context.eventHandlers.onMove, false);
 		    if(context.moveCancelEvents.length) {
 		    	context.unbindEvents(context.currentElement, context.moveCancelEvents, context.eventHandlers.onMoveCancel, false);
@@ -226,9 +230,8 @@ backGesturer.prototype = {
 	bindEvents: function(elem, events, callback, capture) {
 		var elems = elem ? elem : this.elems;
 
-
-		events.forEach(function(event){
-			elems.addEventListener(event, callback, capture);
+		events.forEach(function(aevent){
+			elems.addEventListener(aevent, callback, capture);
 		});
 	},
 
@@ -238,9 +241,9 @@ backGesturer.prototype = {
 
 	unbindEvents: function(elem, events, callback, capture) {
 		var elems = elem ? elem : this.elems;
-
-		events.forEach(function(event){
-			elems.removeEventListener(event, callback, capture);
+		
+		events.forEach(function(aevent){
+			elems.removeEventListener(aevent, callback, capture);
 		});
 	},
 
@@ -252,11 +255,12 @@ backGesturer.prototype = {
 			button2Text = this.options.button2Text;
 
 		if(!button1Text || !button2Text) {
+		    /*
 			throw {
 				name: "ButtonError",
 				message: "No text for button 1 or 2",
 				toString: function(){return this.name + ": " + this.message} 
-			}
+			}*/
 		}
 
 		buttons.className += " backgesture-button-wrapper";
@@ -290,7 +294,6 @@ backGesturer.prototype = {
 	},
 
 	determineWhichSnap: function() {
-
 		var	contentWrapper = this.currentElement.querySelector(".backgesture-content-wrapper"),
 			currentAmount = this.getCurrentMoveAmount(contentWrapper),
 			buttonWrapperWidth = this.currentElement.querySelector(".backgesture-button-wrapper").clientWidth,
@@ -323,7 +326,6 @@ backGesturer.prototype = {
 	},
 
 	moveContentWrapper: function(amount) {
-
 		var prefixedTransform = this.correctTransform,
 			amount = parseInt(amount, 10),
 			elem = this.currentElement,
@@ -331,6 +333,7 @@ backGesturer.prototype = {
 			buttonWrapperWidth = elem.querySelector(".backgesture-button-wrapper").clientWidth,
 			curAmount = this.getCurrentMoveAmount(contentWrapper),
 			correctAmount = curAmount + amount;
+			
 	    if(Math.abs(amount) > 70 && correctAmount < 0) {
 			this.snapToCoordinates(contentWrapper, correctAmount, curAmount);
 		}	

@@ -8,8 +8,8 @@ Usage:
 
 	example:
 	var backgest = new backGesturer(".back-gesturized", {
-		bttn1Callback: function(evt) {alert("I'm button 1 and this is my favourite button in the citadel")},
-		bttn2Callback: function(evt) {alert("I'm button 2 and this is my favourite button in the citadel")}
+		bttn1Callback: function(evt) {alert("I'm button 1 and this is my favourite button on the citadel")},
+		bttn2Callback: function(evt) {alert("I'm button 2 and this is my favourite button on the citadel")}
 	});	
     
 Possible values for the paramsObject:
@@ -23,6 +23,18 @@ Possible values for the paramsObject:
 3. "hwAcceleration": true || false,  _default: true_
     > If you set this to false, The CSS-property "left" will be used instead of detecting transitions.
     > If you're on a browser that doesn't support transitions, left will also be used
+
+4. "onMoveStart": function - _optional_
+    > callback-function for when an element's contentwrapper first starts being translated,
+    > Usage examples:
+    > disable the rest of the UI when the buttons are exposed
+    > If you use a content-scroller like iScroll, disable it when backgesturer activates on an element
+    
+5. "onMoveEnd": function - _optional_
+    > callback-function for when an element's contentwrapper is back at its original position (0,0)
+    > Usage examples:
+    > enable the rest of the UI when the buttons are covered
+    > If you use a content-scroller like iScroll and disabled it on onMoveStart, enable it back.
     
     ##Info
     For best performance, use the following structure in the elements you use backgesture on:
@@ -32,13 +44,13 @@ Possible values for the paramsObject:
             .backgesture-button-wrapper
                 .backgesture-button.backgesture-button1
                     span "buttontitle"
-                .backgesture-button..backgesture-button2
+                .backgesture-button.backgesture-button2
                     span "buttontitle
                     
         for example:
         <li class="back-gesturized">
 		    <div class="backgesture-content-wrapper">
-                Lorem ipsum asd asd
+                <span>Lorem ipsum asd asd</span>
             </div>
 			<div class="backgesture-button-wrapper">
                 <div class="backgesture-button backgesture-button1">
@@ -50,7 +62,7 @@ Possible values for the paramsObject:
             </div>
 		</li>
 
-In case you use backgesturer on an element with no .backgesture-content-wrapper or .backgesture-button-wrapper, it will be generated, but the performance will be poor. Especially in a large node-collection.
+In case you use backgesturer on an element with no .backgesture-content-wrapper or .backgesture-button-wrapper, they will be generated, but the performance will be poor. Especially in a large node-collection.
 
 ##Browser support
 Should work on all modern browsers, but please note that I made this primarily for mobile-webapps.

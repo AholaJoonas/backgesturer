@@ -61,9 +61,9 @@ function backGesturer(elems, options) {
 	this.eventHandlers = {
 
 		onMoveStart: function(evt) {
-			var startX = evt.touches[0].pageX,
-				startY = evt.touches[0].pageY,
-				context = thisRef,
+			var context = thisRef,
+			    startX = context.getCoordinatesFromEvent(evt, "x"),
+                startY = context.getCoordinatesFromEvent(evt, "y"),
 				that = this;
 
 			//If element is "snapping"
@@ -98,21 +98,33 @@ function backGesturer(elems, options) {
 		    if( thisRef.options.isAndroid ) {
 		      evt.preventDefault();
 		    }
-			var context = thisRef,
-				startX = context.currentX,
+			var context = thisRef;
+			
+			if(context.isLocked) {
+                return;
+            }
+			
+			var	startX = context.currentX,
 				startY = context.currentY,
 				origX = context.startX,
 				origY = context.startY,
-				currentX = evt.touches[0].pageX,
-				currentY = evt.touches[0].pageY,
+				currentX = context.getCoordinatesFromEvent(evt, "x"),
+				currentY = context.getCoordinatesFromEvent(evt, "y"),
 				amountMoved = Math.abs(startX - currentX),
-				correctDir = Math.abs(origY - currentY) < 25,
+				correctDir = Math.abs(origY - currentY) < Math.abs(origX - currentX),
 				isClick = evt.timeStamp - context.stStamp < 150 && Math.abs(origX - currentX) < 5,
 				dirPrefix = startX - currentX > 0 ? "-" : "";
 				amountMoved = dirPrefix+amountMoved;
+				
+			//If user has moved on Y-axel too much, lock down until the end-event	
+		    if(evt.timeStamp - context.stStamp < 100 && !correctDir) {
+		        console.log("locking transitions, too much Y");
+		        context.isLocked = 1;
+		    }
             
-			if(correctDir && !isClick && !context.isTranslating && Math.abs(amountMoved) > 0) {
+			if(!isClick && !context.isTranslating && Math.abs(amountMoved) > 0) {
 				evt.preventDefault();
+				context.launchOnMoveStartCallback();
 				context.moveContentWrapper(amountMoved);
 				context.setCoords(currentX, currentY);
 			}
@@ -125,16 +137,23 @@ function backGesturer(elems, options) {
 
 		onMoveEnd: function(evt) {
 			var context = thisRef,
-				isClick = evt.timeStamp - context.stStamp < 150 && Math.abs(context.startX - evt.changedTouches[0].pageX) < 5;
+				isClick = evt.timeStamp - context.stStamp < 150 && Math.abs(context.startX - context.getCoordinatesFromEvent(evt)) < 5;
+				
 		    context.unbindEvents(context.currentElement, context.moveEvents, context.eventHandlers.onMove, false);
 		    if(context.moveCancelEvents.length) {
 		    	context.unbindEvents(context.currentElement, context.moveCancelEvents, context.eventHandlers.onMoveCancel, false);
 		    }
 		    context.unbindEvents(document, context.stopEvents, context.eventHandlers.onMoveEnd, false);
+		    
+		    if(context.isLocked) {
+		        context.isLocked = 0;
+		        return;
+		    }
 			if(!isClick) {
 				context.determineWhichSnap();
 				return;
 			}
+			
 		},
 
 		button1Clicked: function(evt) {
@@ -255,12 +274,11 @@ backGesturer.prototype = {
 			button2Text = this.options.button2Text;
 
 		if(!button1Text || !button2Text) {
-		    /*
 			throw {
 				name: "ButtonError",
 				message: "No text for button 1 or 2",
 				toString: function(){return this.name + ": " + this.message} 
-			}*/
+			};
 		}
 
 		buttons.className += " backgesture-button-wrapper";
@@ -286,7 +304,7 @@ backGesturer.prototype = {
 			while(eContent.length) {
 				contentWrapper.appendChild(eContent[0]);
 			}
-			e.appendChild(contentWrapper)
+			e.appendChild(contentWrapper);
 		}else {
 			e.appendChild(contentWrapper);
 		}
@@ -316,7 +334,14 @@ backGesturer.prototype = {
 						0;
 		}
 	},
-
+	
+	getCoordinatesFromEvent: function(evt, which) {
+	    var coord = which === "x" ? "pageX" : "pageY",
+	        properCell =  evt.touches && evt.touches.length ? evt.touches[0] : evt.changedTouches ? evt.changedTouches[0] : evt;
+	    
+	    return this.options.touchEnabled ? properCell[coord] : properCell[coord];
+	},
+	
 	init: function() {
 		this.bindScrollEvent();
 		this.addStyles();
@@ -324,16 +349,30 @@ backGesturer.prototype = {
 		this.addButtons();
 		this.attachToElems();
 	},
-
+	
+	launchOnMoveEndCallback: function() {
+        if(this.options.onMoveEnd) {
+            console.log("onMoveEnd");
+            this.options.onMoveEnd.call();
+        }
+    },
+	
+	launchOnMoveStartCallback: function() {
+	    if(this.options.onMoveStart && !this.onMoveStartCalled) {
+	        console.log("onMoveStart");
+	        this.options.onMoveStart.call();
+	        this.onMoveStartCalled = 1;
+	    }
+	},
+	
 	moveContentWrapper: function(amount) {
 		var prefixedTransform = this.correctTransform,
 			amount = parseInt(amount, 10),
 			elem = this.currentElement,
 			contentWrapper = elem.querySelector(".backgesture-content-wrapper"),
-			buttonWrapperWidth = elem.querySelector(".backgesture-button-wrapper").clientWidth,
 			curAmount = this.getCurrentMoveAmount(contentWrapper),
-			correctAmount = curAmount + amount;
-			
+			correctAmount = curAmount + (Math.abs(amount) > 5 ? amount/1.3 : amount);
+		
 	    if(Math.abs(amount) > 70 && correctAmount < 0) {
 			this.snapToCoordinates(contentWrapper, correctAmount, curAmount);
 		}	
@@ -348,6 +387,7 @@ backGesturer.prototype = {
 		}else {
 			contentWrapper.style[prefixedTransform] = correctAmount+"px";
 		}
+		
 
 	},
 
@@ -371,6 +411,10 @@ backGesturer.prototype = {
 		this.setCoords(0,0);
 		this.setCoords(0,0, true);
 		this.unbindButtons();
+		
+		
+		this.onMoveStartCalled = 0;
+		this.launchOnMoveEndCallback();
 	},
 
 	setCoords: function(x, y, start) {
@@ -390,14 +434,17 @@ backGesturer.prototype = {
 		function snapTo() {
 			var amountRemaining = Math.abs(currentX - targetX),
 				moveAmount = amountRemaining >= 20 ? Math.floor(amountRemaining/5) : 
-						     amountRemaining >= 10 ? 3 : 1;
+						     amountRemaining >= 10 ? 3 : 
+						     //Last one is needed because sometimes this can be < 0, so we need to then move the exact amount
+						     amountRemaining < 1 ? amountRemaining : 1;
 
 			if(currentX > targetX) {
 				currentX = currentX - moveAmount;
 			}else if(currentX < targetX) {
 				currentX = currentX + moveAmount;
 			}else {
-				context.isTranslating = 0;
+			    //Will attach eventlisteners again
+			    context.isTranslating = 0;
 				//Reset the current and start coordinates if snapping to default position
 				if(targetX === 0) {
 					context.resetState();

@@ -12,3 +12,15 @@ li {
   -ms-user-select: none;
   user-select: none;
 }
+
+/* line 15, ../../sass/test.scss */
+#iscroll-wrapper {
+  height: 300px;
+  position: relative;
+}
+
+/* line 20, ../../sass/test.scss */
+.back-gesturized-three {
+  overflow: hidden;
+  position: relative;
+}

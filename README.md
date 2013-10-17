@@ -26,14 +26,20 @@ Possible values for the paramsObject:
 
 4. "onMoveStart": function - _optional_
     > callback-function for when an element's contentwrapper first starts being translated,
+    
     > Usage examples:
+    
     > disable the rest of the UI when the buttons are exposed
+    
     > If you use a content-scroller like iScroll, disable it when backgesturer activates on an element
     
 5. "onMoveEnd": function - _optional_
     > callback-function for when an element's contentwrapper is back at its original position (0,0)
+    
     > Usage examples:
+    
     > enable the rest of the UI when the buttons are covered
+    
     > If you use a content-scroller like iScroll and disabled it on onMoveStart, enable it back.
     
     ##Info

@@ -1,50 +1,49 @@
 
 .backgesture-content-wrapper {
-	-webkit-tap-highlight-color:rgba(0,0,0,0);
-	width: 100%;
-	height: 100%;
-	position: relative;
-	z-index: 2;
-	margin: 0;
-	padding: 5px;
-	background-color: inherit;
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	box-sizing: border-box;
+  -webkit-tap-highlight-color:rgba(0,0,0,0);
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  background-color: inherit;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 .backgesture-button-wrapper {
-	position: absolute;
-	z-index: 1;
-	right: 1px;
-	top: 1px;
-	height: 100%;
-	width: 150px;
-	.backgesture-button {
-		display:inline-block;
-		vertical-align: middle;
-		height: 100%;
-		width: 50%;
-		position: relative;
-		background: grey;
-		span {
-			position: absolute;
-			margin: auto;
-			top: 0;
-			left: 0;
-			right: 0;
-			bottom: 0;
-			height: 20px;
-			text-align: center;
-		}
+  position: absolute;
+  z-index: 1;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 150px;
+  .backgesture-button {
+    display:inline-block;
+    vertical-align: middle;
+    height: 100%;
+    width: 50%;
+    position: relative;
+    background: grey;
+    span {
+      position: absolute;
+      margin: auto;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 20px;
+      text-align: center;
+    }
 
-	}
-	.backgesture-button1 {
-		background-color: grey;
-	}
+  }
+  .backgesture-button1 {
+    background-color: grey;
+  }
 
-	.backgesture-button2 {
-		background-color: red;
+  .backgesture-button2 {
+    background-color: red;
 
-	}
+  }
 }

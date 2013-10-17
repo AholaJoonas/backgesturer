@@ -41,6 +41,10 @@ Possible values for the paramsObject:
     > enable the rest of the UI when the buttons are covered
     
     > If you use a content-scroller like iScroll and disabled it on onMoveStart, enable it back.
+
+6. "resetOnWindowScroll": true || false _optional, default: false_  
+    > setting this to _true_ will reset currently translated elements when the window scrolls
+    
     
     ##Info
     For best performance, use the following structure in the elements you use backgesture on:

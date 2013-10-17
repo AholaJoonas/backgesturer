@@ -6,23 +6,22 @@
   position: relative;
   z-index: 2;
   margin: 0;
-  padding: 5px;
   background-color: inherit;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
 
-/* line 16, ../../sass/backgesturer.scss */
+/* line 15, ../../sass/backgesturer.scss */
 .backgesture-button-wrapper {
   position: absolute;
   z-index: 1;
-  right: 1px;
-  top: 1px;
+  right: 0;
+  top: 0;
   height: 100%;
   width: 150px;
 }
-/* line 23, ../../sass/backgesturer.scss */
+/* line 22, ../../sass/backgesturer.scss */
 .backgesture-button-wrapper .backgesture-button {
   display: inline-block;
   vertical-align: middle;
@@ -31,7 +30,7 @@
   position: relative;
   background: grey;
 }
-/* line 30, ../../sass/backgesturer.scss */
+/* line 29, ../../sass/backgesturer.scss */
 .backgesture-button-wrapper .backgesture-button span {
   position: absolute;
   margin: auto;
@@ -42,11 +41,11 @@
   height: 20px;
   text-align: center;
 }
-/* line 42, ../../sass/backgesturer.scss */
+/* line 41, ../../sass/backgesturer.scss */
 .backgesture-button-wrapper .backgesture-button1 {
   background-color: grey;
 }
-/* line 46, ../../sass/backgesturer.scss */
+/* line 45, ../../sass/backgesturer.scss */
 .backgesture-button-wrapper .backgesture-button2 {
   background-color: red;
 }

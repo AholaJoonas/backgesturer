@@ -6,7 +6,6 @@ function backGesturer(elems, options) {
     this.elems =  typeof elems === "string" ? document.querySelectorAll(elems) : elems;
     
     if(!this.elems || !this.elems.length) {
-        alert("backgesturer - creating on elements not existing");
         return false;
     }
 
@@ -55,7 +54,9 @@ function backGesturer(elems, options) {
 
     this.correctTransform = options.hwAcceleration === false ? "left" : this.useTransforms() || "left";
     this.hwTrans = options.hwAcceleration === false ? "" : this.use3dTransforms() ?  " translateZ(0)" : "";
-    this.rFrame = this.normalizeAnimationFrame();
+    this.rFrame = this.normalizeAnimationFrame(),
+    this.correctClickEvent = this.options.touchEnabled ? "touchend" :
+                             this.options.pointersEnabled ? "MSPointerUp" : "click";
 
     //coordinates
     this.startX = 0,
@@ -71,19 +72,25 @@ function backGesturer(elems, options) {
             //console.log("onMoveStart");
             var context = thisRef,
                 startX = context.getCoordinatesFromEvent(evt, "x"),
-                startY = context.getCoordinatesFromEvent(evt, "y"),
-                that = this;
-
+                startY = context.getCoordinatesFromEvent(evt, "y");
+                
             //If element is "snapping"
             if(context.isTranslating) {
                 return;
             }
-
+            
             //An element is already translated, reset it first
             //But not if it is the current node, ie. if user is clicking the buttons
             if(context.currentX && context.currentX !== 0 && !this.isEqualNode(context.currentElement)) {
                 evt.preventDefault();
                 return context.resetCurrentElement();
+            }
+            
+            //Launch the onBeforeMove-callback if present
+            if(context.options.onBeforeMove) {
+                if(!context.options.onBeforeMove.call(this)) {
+                    return //console.log("onBeforeMove returned false, not proceeding");
+                }
             }
 
             //Save a reference to this DOM-element
@@ -93,7 +100,6 @@ function backGesturer(elems, options) {
             context.setCoords(startX, startY, true);
             context.stStamp = evt.timeStamp;
 
-            context.bindButtonCallbacks();
             context.bindEvents(this, context.moveEvents, context.eventHandlers.onMove, false);
             if(context.moveCancelEvents.length) {
                 context.bindEvents(this, context.moveCancelEvents, context.eventHandlers.onMoveCancel, false);
@@ -121,14 +127,15 @@ function backGesturer(elems, options) {
                 currentY = context.getCoordinatesFromEvent(evt, "y"),
                 amountMoved = Math.abs(startX - currentX),
                 correctDir = Math.abs(origY - currentY) < Math.abs(origX - currentX),
-                isClick = evt.timeStamp - context.stStamp < 150 && Math.abs(origX - currentX) < 5,
+                isClick = Math.abs(origX - currentX) < 5,
                 dirPrefix = startX - currentX > 0 ? "-" : "";
                 amountMoved = dirPrefix+amountMoved;
                 
             //If user has moved on Y-axel too much, lock down until the end-event   
-            if(evt.timeStamp - context.stStamp < 100 && !correctDir) {
+            if(evt.timeStamp - context.stStamp < 100 && !correctDir && isClick) {
                 //console.log("locking transitions, too much Y");
                 context.isLocked = 1;
+                context.determineWhichSnap();
             }
             
             if(!isClick && !context.isTranslating && Math.abs(amountMoved) > 0) {
@@ -163,18 +170,36 @@ function backGesturer(elems, options) {
             if(!isClick) {
                 context.determineWhichSnap();
                 return;
+            }else {
+                
             }
             
         },
 
         button1Clicked: function(evt) {
             evt.stopPropagation();
-            thisRef.options.button1Callback.apply(this, [evt]);
+            evt.preventDefault();
+            if(thisRef.correctClickEvent === "touchend") {
+                var e = document.elementFromPoint(evt.changedTouches[0].pageX, evt.changedTouches[0].pageY);
+                if(thisRef.determineIfStillOnButton(e) === "1") {
+                    thisRef.options.button1Callback.apply(this, [evt]);
+                }
+            }else {
+                thisRef.options.button1Callback.apply(this, [evt]);
+            }
         },
 
         button2Clicked: function(evt) {
             evt.stopPropagation();
-            thisRef.options.button2Callback.apply(this, [evt]);
+            evt.preventDefault();
+            if(thisRef.correctClickEvent === "touchend") {
+                var e = document.elementFromPoint(evt.changedTouches[0].pageX, evt.changedTouches[0].pageY);
+                if(thisRef.determineIfStillOnButton(e) === "2") {
+                    thisRef.options.button2Callback.apply(this, [evt]);
+                }
+            }else {
+                thisRef.options.button2Callback.apply(this, [evt]);
+            }
         },
 
         onWindowScroll: function(evt) {
@@ -188,7 +213,11 @@ function backGesturer(elems, options) {
     };
 
     this.init();
-    return this;
+    
+    return this; 
+    //{
+      //  "destroy" : this.destroy.bind(this)
+    //};
 };
 
 backGesturer.prototype = {
@@ -225,10 +254,8 @@ backGesturer.prototype = {
 
         for(;i<l;i++) {
             var e = this.elems[i];
-            if(this.correctTransform !== "left") {
-                for(var s in wrapperStyles) {
-                    e.style[s] = wrapperStyles[s];
-                }
+            for(var s in wrapperStyles) {
+                e.style[s] = wrapperStyles[s];
             }
         }
     },
@@ -237,32 +264,39 @@ backGesturer.prototype = {
         var i = 0, l = this.elems.length;
 
         for(;i<l;i++) {
-            this.bindEvents(this.elems[i], this.startEvents, this.eventHandlers.onMoveStart, false);
+            var e = this.elems[i].querySelector(".backgesture-content-wrapper");
+            this.bindEvents(e, this.startEvents, this.eventHandlers.onMoveStart, false);
         }
     },
 
-    bindButtonCallbacks: function() {
-        var button1 = this.currentElement.querySelector(".backgesture-button1"),
-            button2 = this.currentElement.querySelector(".backgesture-button2");
-
-        this.bindEvents(button1, ["click"], this.eventHandlers.button1Clicked, true);
-        this.bindEvents(button2, ["click"], this.eventHandlers.button2Clicked, true);
+    bindButtons: function() {
+        //console.log("bindButtons");
+        if(this.buttonsBound) {
+            //console.log("buttons already bound, not binding again");
+            return false;
+        }
+        var button1 = this.currentElement.parentElement.querySelector(".backgesture-button1"),
+            button2 = this.currentElement.parentElement.querySelector(".backgesture-button2");
+            
+        this.bindEvents(button1, [this.correctClickEvent], this.eventHandlers.button1Clicked, false);
+        this.bindEvents(button2, [this.correctClickEvent], this.eventHandlers.button2Clicked, false);
+        this.buttonsBound = 1;
     },
 
     unbindButtons: function() {
-        var button1 = this.currentElement.querySelector(".backgesture-button1"),
-            button2 = this.currentElement.querySelector(".backgesture-button2");
-
-        this.unbindEvents(button1, ["click"], this.eventHandlers.button1Clicked, true);
-        this.unbindEvents(button2, ["click"], this.eventHandlers.button2Clicked, true);
-
+        //console.log("unbindButtons");
+        var button1 = this.currentElement.parentElement.querySelector(".backgesture-button1"),
+            button2 = this.currentElement.parentElement.querySelector(".backgesture-button2");
+            
+        this.unbindEvents(button1, [this.correctClickEvent], this.eventHandlers.button1Clicked, false);
+        this.unbindEvents(button2, [this.correctClickEvent], this.eventHandlers.button2Clicked, false);
+        this.buttonsBound = 0;
     },
 
     bindEvents: function(elem, events, callback, capture) {
-        var elems = elem ? elem : this.elems;
-
-        events.forEach(function(aevent){
-            elems.addEventListener(aevent, callback, capture);
+        events.forEach(function(anevent){
+            //console.log("binding: "+anevent+" to "+elem.className);
+            elem.addEventListener(anevent, callback, capture);
         });
     },
 
@@ -273,10 +307,8 @@ backGesturer.prototype = {
     },
 
     unbindEvents: function(elem, events, callback, capture) {
-        var elems = elem ? elem : this.elems;
-        
-        events.forEach(function(aevent){
-            elems.removeEventListener(aevent, callback, capture);
+        events.forEach(function(anevent){
+            elem.removeEventListener(anevent, callback, capture);
         });
     },
 
@@ -288,11 +320,14 @@ backGesturer.prototype = {
             button2Text = this.options.button2Text;
 
         if(!button1Text || !button2Text) {
+            /*
             throw {
                 name: "ButtonError",
                 message: "No text for button 1 or 2",
-                toString: function(){return this.name + ": " + this.message} 
+                toString: function(){return this.name + ": " + this.message;}
             };
+            */
+           
         }
 
         buttons.className += " backgesture-button-wrapper";
@@ -324,11 +359,59 @@ backGesturer.prototype = {
         }
 
     },
+    
+    deattachFromButtons: function() {
+        var i = 0, l = this.elems.length;
+            
+
+        for(;i<l;i++) {
+            var e = this.elems[i].querySelector(".backgesture-content-wrapper");
+            this.unbindEvents(e, this.startEvents, this.eventHandlers.onMoveStart, false);
+        }
+        //If currentelement is set, remove its handlers
+        if(this.currentElement) {
+            this.unbindButtons();
+            this.unbindEvents(this.currentElement, this.moveEvents, this.eventHandlers.onMove, false);
+            if(this.moveCancelEvents.length) {
+                this.unbindEvents(this.currentElement, this.moveCancelEvents, this.eventHandlers.onMoveCancel, false);
+            }
+            this.unbindEvents(document, this.stopEvents, this.eventHandlers.onMoveEnd, false);
+        }
+        if(this.options.resetOnWindowScroll) {
+            window.removeEventListener("scroll", this.eventHandlers.onWindowScroll, false);
+        }
+    },
+    
+    destroy: function() {
+        var that = this;
+        this.resetCurrentElement(function destroyAfterTranslating() {
+            that.deattachFromButtons();
+        });
+    },
+    
+    determineIfStillOnButton: function(e) {
+        //console.log("determineIfStillOnButton");
+        //console.log(e);
+        var isButton = e.className.indexOf("backgesture-button") !== -1;
+        
+        if(isButton) {
+            //console.log("still on button!");
+            return e.className.indexOf("backgesture-button1") !== -1 ? "1" : "2";
+        }
+        while(e.parentElement) {
+            e = e.parentElement;
+            //console.log(e);
+            if(e.className.indexOf("backgesture-button") !== -1) {
+                return e.className.indexOf("backgesture-button1") !== -1 ? "1" : "2";
+            }
+        }
+        return false;
+    },
 
     determineWhichSnap: function() {
-        var contentWrapper = this.currentElement.querySelector(".backgesture-content-wrapper"),
+        var contentWrapper = this.currentElement,
             currentAmount = this.getCurrentMoveAmount(contentWrapper),
-            buttonWrapperWidth = this.currentElement.querySelector(".backgesture-button-wrapper").clientWidth,
+            buttonWrapperWidth = this.currentElement.parentElement.querySelector(".backgesture-button-wrapper").clientWidth,
             snapTo = -currentAmount > (buttonWrapperWidth/2) ? (-buttonWrapperWidth-1) : 0;
 
         this.snapToCoordinates(contentWrapper, snapTo, currentAmount);
@@ -366,24 +449,30 @@ backGesturer.prototype = {
     
     launchOnMoveEndCallback: function() {
         if(this.options.onMoveEnd) {
-            //console.log("onMoveEnd");
-            this.options.onMoveEnd.call();
+            //console.log("onMoveEndCallback");
+            this.options.onMoveEnd.call(this.currentElement.parentElement);
         }
     },
     
     launchOnMoveStartCallback: function() {
         if(this.options.onMoveStart && !this.onMoveStartCalled) {
-            //console.log("onMoveStart");
-            this.options.onMoveStart.call();
+            //console.log("onMoveStartCallback");
+            this.options.onMoveStart.call(this.currentElement.parentElement);
             this.onMoveStartCalled = 1;
+        }
+    },
+    
+    launchOnMoveResetCallback: function() {
+        if(this.options.onMoveReset) {
+            //console.log("onMoveResetCallback");
+            this.options.onMoveReset.call(this.currentElement.parentElement);
         }
     },
     
     moveContentWrapper: function(amount) {
         var prefixedTransform = this.correctTransform,
             amount = parseInt(amount, 10),
-            elem = this.currentElement,
-            contentWrapper = elem.querySelector(".backgesture-content-wrapper"),
+            contentWrapper = this.currentElement,
             curAmount = this.getCurrentMoveAmount(contentWrapper),
             correctAmount = curAmount + (Math.abs(amount) > 5 ? amount/1.3 : amount);
         
@@ -414,11 +503,16 @@ backGesturer.prototype = {
             function (callback) { window.setTimeout(callback, 1000 / 60); };
     },
 
-    resetCurrentElement: function() {
-        var currentElemContentWrapper = this.currentElement.querySelector(".backgesture-content-wrapper"),
+    resetCurrentElement: function(callback) {
+        if(this.currentElement) {
+            var currentElemContentWrapper = this.currentElement,
             currentX = this.getCurrentMoveAmount(currentElemContentWrapper);
-
-        this.snapToCoordinates(currentElemContentWrapper, 0, currentX);
+            this.snapToCoordinates(currentElemContentWrapper, 0, currentX, callback);
+        }else {
+            if (callback) {
+                callback.call();
+            }
+        }
     },
 
     resetState: function() {
@@ -426,9 +520,8 @@ backGesturer.prototype = {
         this.setCoords(0,0, true);
         this.unbindButtons();
         
-        
         this.onMoveStartCalled = 0;
-        this.launchOnMoveEndCallback();
+        this.launchOnMoveResetCallback();
     },
 
     setCoords: function(x, y, start) {
@@ -441,7 +534,7 @@ backGesturer.prototype = {
         }
     },
 
-    snapToCoordinates: function(elem, targetX, currentX) {
+    snapToCoordinates: function(elem, targetX, currentX, callback) {
         var that = elem,
             context = this;
 
@@ -460,9 +553,18 @@ backGesturer.prototype = {
                 //Will attach eventlisteners again
                 context.isTranslating = 0;
                 //Reset the current and start coordinates if snapping to default position
+                //Else bind the buttons
                 if(targetX === 0) {
                     context.resetState();
+                }else {
+                    context.bindButtons();
                 }
+                
+                if(callback) {
+                    callback.call();
+                }
+                context.launchOnMoveEndCallback();
+                
                 return;
             }
             if(context.correctTransform !== "left") {
@@ -474,7 +576,6 @@ backGesturer.prototype = {
         };
         context.rFrame.call(window, snapTo);
         context.isTranslating = 1;
-
     },
 
     useTransforms: function() {

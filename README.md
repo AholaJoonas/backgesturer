@@ -33,7 +33,7 @@ Possible values for the paramsObject:
     
     > If you use a content-scroller like iScroll, disable it when backgesturer activates on an element
     
-5. "onMoveEnd": function - _optional_
+5. "onMoveReset": function - _optional_
     > callback-function for when an element's contentwrapper is back at its original position (0,0)
     
     > Usage examples:
@@ -42,9 +42,17 @@ Possible values for the paramsObject:
     
     > If you use a content-scroller like iScroll and disabled it on onMoveStart, enable it back.
 
-6. "resetOnWindowScroll": true || false _optional, default: false_  
+6. "onMoveEnd": function - _optional_
+    > callback-function for when an element's contentwrapper is back at its original position (0,0) or the buttons are exposed
+
+
+7. "resetOnWindowScroll": true || false _optional, default: false_  
     > setting this to _true_ will reset currently translated elements when the window scrolls
     
+8. "onBeforeMoveStart": function _optional_, must return a truthy or a falsy value
+    > This function, if present, is launched when determining if the element can be dragged
+    > So you can have your own custom check to decide if the element can be dragged
+    > context of the function is the element that the user is pressing
     
     ##Info
     For best performance, use the following structure in the elements you use backgesture on:

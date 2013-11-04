@@ -6,6 +6,7 @@ function backGesturer(elems, options) {
     this.elems =  typeof elems === "string" ? document.querySelectorAll(elems) : elems;
     
     if(!this.elems || !this.elems.length) {
+        this.disabled = true;
         return false;
     }
 
@@ -89,7 +90,7 @@ function backGesturer(elems, options) {
             //Launch the onBeforeMove-callback if present
             if(context.options.onBeforeMove) {
                 if(!context.options.onBeforeMove.call(this)) {
-                    return //console.log("onBeforeMove returned false, not proceeding");
+                    return console.log("onBeforeMove returned false, not proceeding");
                 }
             }
 
@@ -127,7 +128,7 @@ function backGesturer(elems, options) {
                 currentY = context.getCoordinatesFromEvent(evt, "y"),
                 amountMoved = Math.abs(startX - currentX),
                 correctDir = Math.abs(origY - currentY) < Math.abs(origX - currentX),
-                isClick = Math.abs(origX - currentX) < 5,
+                isClick = Math.abs(origX - currentX) < 15,
                 dirPrefix = startX - currentX > 0 ? "-" : "";
                 amountMoved = dirPrefix+amountMoved;
                 
@@ -170,8 +171,6 @@ function backGesturer(elems, options) {
             if(!isClick) {
                 context.determineWhichSnap();
                 return;
-            }else {
-                
             }
             
         },
@@ -215,9 +214,6 @@ function backGesturer(elems, options) {
     this.init();
     
     return this; 
-    //{
-      //  "destroy" : this.destroy.bind(this)
-    //};
 };
 
 backGesturer.prototype = {
@@ -361,8 +357,12 @@ backGesturer.prototype = {
     },
     
     deattachFromButtons: function() {
+        _c.dir(this);
         var i = 0, l = this.elems.length;
-            
+        
+        if(this.disabled) {
+            return true;
+        }
 
         for(;i<l;i++) {
             var e = this.elems[i].querySelector(".backgesture-content-wrapper");
@@ -377,7 +377,7 @@ backGesturer.prototype = {
             }
             this.unbindEvents(document, this.stopEvents, this.eventHandlers.onMoveEnd, false);
         }
-        if(this.options.resetOnWindowScroll) {
+        if(this.options && this.options.resetOnWindowScroll) {
             window.removeEventListener("scroll", this.eventHandlers.onWindowScroll, false);
         }
     },

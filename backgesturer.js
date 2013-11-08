@@ -246,12 +246,20 @@ backGesturer.prototype = {
             wrapperStyles = {
                 overflow: "hidden",
                 position: "relative"
-            };
+            },
+            buttonWrapperStyles = {
+                width: this.options.buttonWrapperWidth+"px"
+            }
 
         for(;i<l;i++) {
-            var e = this.elems[i];
+            var e = this.elems[i],
+                bWrapper = e.querySelector(".backgesture-button-wrapper");
+                
             for(var s in wrapperStyles) {
                 e.style[s] = wrapperStyles[s];
+            }
+            for(var s in buttonWrapperStyles) {
+                bWrapper.style[s] = buttonWrapperStyles[s];
             }
         }
     },
@@ -440,10 +448,11 @@ backGesturer.prototype = {
     },
     
     init: function() {
+        this.determineButtonWrapperWidth();
         this.bindScrollEvent();
-        this.addStyles();
         this.addContentWrapper();
         this.addButtons();
+        this.addStyles();
         this.attachToElems();
     },
     
@@ -467,6 +476,34 @@ backGesturer.prototype = {
             //console.log("onMoveResetCallback");
             this.options.onMoveReset.call(this.currentElement.parentElement);
         }
+    },
+    
+    determineButtonWrapperWidth: function() {
+        var width = this.measureTextWidthForButtons()*2 + 10,
+            elemWidth = this.elems[0].clientWidth;
+            
+        this.options.buttonWrapperWidth = width < 150 ? 150 :  width < elemWidth ? width : elemWidth - 60;
+        console.log(this.options.buttonWrapperWidth);
+    },
+    
+    measureTextWidthForButtons: function() {
+        var button1Text = this.options.button1Text || this.elems[0].querySelector(".backgesture-button1").innerHTML,
+            button2Text = this.options.button2Text || this.elems[0].querySelector(".backgesture-button2").innerHTML,
+            text = button1Text.length > button2Text.length ? button1Text : button2Text,
+            testElem = document.createElement("div"),
+            width;
+            
+            testElem.style.visibility = "hidden";
+            testElem.style.position = "absolute";
+                
+            testElem.innerHTML = text;
+            
+            document.body.appendChild(testElem);
+            
+            width = testElem.clientWidth;
+            
+            document.body.removeChild(testElem);
+            return width;
     },
     
     moveContentWrapper: function(amount) {

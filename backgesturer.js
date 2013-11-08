@@ -483,7 +483,6 @@ backGesturer.prototype = {
             elemWidth = this.elems[0].clientWidth;
             
         this.options.buttonWrapperWidth = width < 150 ? 150 :  width < elemWidth ? width : elemWidth - 60;
-        console.log(this.options.buttonWrapperWidth);
     },
     
     measureTextWidthForButtons: function() {
@@ -506,7 +505,7 @@ backGesturer.prototype = {
             
             width = testElem.clientWidth;
             
-            //document.body.removeChild(testElem);
+            document.body.removeChild(testElem);
             return width;
     },
     

@@ -249,7 +249,7 @@ backGesturer.prototype = {
             },
             buttonWrapperStyles = {
                 width: this.options.buttonWrapperWidth+"px"
-            }
+            };
 
         for(;i<l;i++) {
             var e = this.elems[i],
@@ -298,9 +298,9 @@ backGesturer.prototype = {
     },
 
     bindEvents: function(elem, events, callback, capture) {
-        events.forEach(function(anevent){
+        events.forEach(function(anEvent){
             //console.log("binding: "+anevent+" to "+elem.className);
-            elem.addEventListener(anevent, callback, capture);
+            elem.addEventListener(anEvent, callback, capture);
         });
     },
 
@@ -311,8 +311,8 @@ backGesturer.prototype = {
     },
 
     unbindEvents: function(elem, events, callback, capture) {
-        events.forEach(function(anevent){
-            elem.removeEventListener(anevent, callback, capture);
+        events.forEach(function(anEvent){
+            elem.removeEventListener(anEvent, callback, capture);
         });
     },
 
@@ -448,10 +448,10 @@ backGesturer.prototype = {
     },
     
     init: function() {
-        this.determineButtonWrapperWidth();
         this.bindScrollEvent();
         this.addContentWrapper();
         this.addButtons();
+        this.determineButtonWrapperWidth();
         this.addStyles();
         this.attachToElems();
     },
@@ -479,7 +479,7 @@ backGesturer.prototype = {
     },
     
     determineButtonWrapperWidth: function() {
-        var width = this.measureTextWidthForButtons()*2 + 10,
+        var width = this.measureTextWidthForButtons()*2 + 20,
             elemWidth = this.elems[0].clientWidth;
             
         this.options.buttonWrapperWidth = width < 150 ? 150 :  width < elemWidth ? width : elemWidth - 60;
@@ -490,11 +490,15 @@ backGesturer.prototype = {
         var button1Text = this.options.button1Text || this.elems[0].querySelector(".backgesture-button1").innerHTML,
             button2Text = this.options.button2Text || this.elems[0].querySelector(".backgesture-button2").innerHTML,
             text = button1Text.length > button2Text.length ? button1Text : button2Text,
+            styles = window.getComputedStyle(this.elems[0].querySelector(".backgesture-button span")),
             testElem = document.createElement("div"),
             width;
             
             testElem.style.visibility = "hidden";
             testElem.style.position = "absolute";
+            testElem.style.fontSize = styles.fontSize;
+            testElem.style.textTransform = styles.textTransform;
+            testElem.style.letterSpacing = styles.letterSpacing;
                 
             testElem.innerHTML = text;
             
@@ -502,7 +506,7 @@ backGesturer.prototype = {
             
             width = testElem.clientWidth;
             
-            document.body.removeChild(testElem);
+            //document.body.removeChild(testElem);
             return width;
     },
     

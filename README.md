@@ -51,9 +51,9 @@ Possible values for the paramsObject:
     > setting this to _true_ will reset currently translated elements when the window scrolls
     
 8. "onBeforeMoveStart": function _optional_, must return a truthy or a falsy value
-    > This function, if present, is launched when determining if the element can be dragged
-    > So you can have your own custom check to decide if the element can be dragged
-    > context of the function is the element that the user is pressing
+    > This function, if present, is launched when determining if the element can be dragged.
+    > So you can have your own custom check to decide if the element can be dragged.
+    > Context of the function is the element that the user is pressing
     
     ##Info
     For best performance, use the following structure in the elements you use backgesture on:
@@ -87,16 +87,13 @@ In case you use backgesturer on an element with no .backgesture-content-wrapper 
 Should work on all modern browsers, but please note that I made this primarily for mobile-webapps.
 ###Tested on
 
-1. iPad 3 and iPhone 5 with iOS 7
+1. iPad 3, iPhone 5 with iOS 7, iPad mini.
 2. latest Chrome, 30.0
 3. Latest Firefox, 24.0
 4. Opera 12.16 and 17.0
 5. IE 9, but has some minor bugs, like buttons not always working
+6. Google Nexus 7
 
-##TODO:
-1. Solve the context-problem (More than one instance of backgesturer --> explosions) -- Should be fixed
-2. Move all the styles to the JS so no additional CSS-files required (necessary?)
-3. Improve the code-quality...
     
     
     

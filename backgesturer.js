@@ -70,7 +70,7 @@ function backGesturer(elems, options) {
     this.eventHandlers = {
 
         onMoveStart: function(evt) {
-            //console.log("onMoveStart");
+            evt.preventDefault();
             var context = thisRef,
                 startX = context.getCoordinatesFromEvent(evt, "x"),
                 startY = context.getCoordinatesFromEvent(evt, "y");
@@ -82,8 +82,7 @@ function backGesturer(elems, options) {
             
             //An element is already translated, reset it first
             //But not if it is the current node, ie. if user is clicking the buttons
-            if(context.currentX && context.currentX !== 0 && !this.isEqualNode(context.currentElement)) {
-                evt.preventDefault();
+            if(context.currentX && context.currentX !== 0 && (!this.isEqualNode(context.currentElement) && context.getCurrentMoveAmount(context.currentElement) !== 0) ) {
                 return context.resetCurrentElement();
             }
             
@@ -101,19 +100,18 @@ function backGesturer(elems, options) {
             context.setCoords(startX, startY, true);
             context.stStamp = evt.timeStamp;
 
-            context.bindEvents(this, context.moveEvents, context.eventHandlers.onMove, false);
+            context.bindEvents(window, context.moveEvents, context.eventHandlers.onMove, false);
             if(context.moveCancelEvents.length) {
                 context.bindEvents(this, context.moveCancelEvents, context.eventHandlers.onMoveCancel, false);
             }
-            context.bindEvents(document, context.stopEvents, context.eventHandlers.onMoveEnd, false);
+            context.bindEvents(window, context.stopEvents, context.eventHandlers.onMoveEnd, false);
 
         },
 
         onMove: function(evt) {
-             //console.log("onMove");
-            if( thisRef.options.isAndroid ) {
-              evt.preventDefault();
-            }
+             
+            evt.preventDefault();
+            
             var context = thisRef;
             
             if(context.isLocked) {
@@ -136,11 +134,10 @@ function backGesturer(elems, options) {
             if(evt.timeStamp - context.stStamp < 100 && !correctDir && isClick) {
                 //console.log("locking transitions, too much Y");
                 context.isLocked = 1;
-                context.determineWhichSnap();
+
             }
             
             if(!isClick && !context.isTranslating && Math.abs(amountMoved) > 0) {
-                evt.preventDefault();
                 context.launchOnMoveStartCallback();
                 context.moveContentWrapper(amountMoved);
                 context.setCoords(currentX, currentY);
@@ -154,15 +151,14 @@ function backGesturer(elems, options) {
 
         onMoveEnd: function(evt) {
             //console.log("onMoveEnd");
-            //console.log(evt);
             var context = thisRef,
-                isClick = evt.timeStamp - context.stStamp < 150 && Math.abs(context.startX - context.getCoordinatesFromEvent(evt)) < 5;
+                isClick = evt.timeStamp - context.stStamp < 150 && Math.abs(context.startX - context.getCoordinatesFromEvent(evt, "x")) < 5;
                 
-            context.unbindEvents(context.currentElement, context.moveEvents, context.eventHandlers.onMove, false);
+            context.unbindEvents(window, context.moveEvents, context.eventHandlers.onMove, false);
             if(context.moveCancelEvents.length) {
                 context.unbindEvents(context.currentElement, context.moveCancelEvents, context.eventHandlers.onMoveCancel, false);
             }
-            context.unbindEvents(document, context.stopEvents, context.eventHandlers.onMoveEnd, false);
+            context.unbindEvents(window, context.stopEvents, context.eventHandlers.onMoveEnd, false);
             
             if(context.isLocked) {
                 context.isLocked = 0;
@@ -175,7 +171,7 @@ function backGesturer(elems, options) {
             
         },
 
-        button1Clicked: function(evt) {
+        button1Clicked: function(evt) { 
             evt.stopPropagation();
             evt.preventDefault();
             if(thisRef.correctClickEvent === "touchend") {
@@ -264,6 +260,17 @@ backGesturer.prototype = {
         }
     },
 
+    afterSingleElementSnapped: function(elemResetted) {
+        //Reset the current and start coordinates if snapping to default position
+        //Else bind the buttons
+        if(elemResetted) {
+            this.resetState();
+        }else {
+            this.bindButtons();
+        }
+        this.launchOnMoveEndCallback();
+    },
+
     attachToElems: function() {
         var i = 0, l = this.elems.length;
 
@@ -273,27 +280,47 @@ backGesturer.prototype = {
         }
     },
 
-    bindButtons: function() {
-        //console.log("bindButtons");
+    bindButtons: function(elems) {
+        console.log("bindButtons");
         if(this.buttonsBound) {
-            //console.log("buttons already bound, not binding again");
+            console.log("buttons already bound, not binding again");
             return false;
         }
-        var button1 = this.currentElement.parentElement.querySelector(".backgesture-button1"),
-            button2 = this.currentElement.parentElement.querySelector(".backgesture-button2");
+        var elementsToBind = !elems ? [this.currentElement] : elems,
+            context = this;
+
+        elementsToBind.forEach( function(elem) {
+            console.log("Binding clickevents to ");
+            console.dir(elem);
+            var button1 = elem.parentElement.querySelector(".backgesture-button1"),
+                button2 = elem.parentElement.querySelector(".backgesture-button2");
+
+            console.log(button1);
             
-        this.bindEvents(button1, [this.correctClickEvent], this.eventHandlers.button1Clicked, false);
-        this.bindEvents(button2, [this.correctClickEvent], this.eventHandlers.button2Clicked, false);
+            context.bindEvents(button1, [context.correctClickEvent], context.eventHandlers.button1Clicked, false);
+            context.bindEvents(button2, [context.correctClickEvent], context.eventHandlers.button2Clicked, false);
+        });
+        
+        
         this.buttonsBound = 1;
+        
+        
     },
 
-    unbindButtons: function() {
-        //console.log("unbindButtons");
-        var button1 = this.currentElement.parentElement.querySelector(".backgesture-button1"),
-            button2 = this.currentElement.parentElement.querySelector(".backgesture-button2");
+    unbindButtons: function(elems) {
+        console.log("unbindButtons");
+       
+        var elementsToBind = !elems ? [this.currentElement] : elems,
+            context = this;
+
+        elementsToBind.forEach( function(elem) {
+            var button1 = elem.parentElement.querySelector(".backgesture-button1"),
+                button2 = elem.parentElement.querySelector(".backgesture-button2");
             
-        this.unbindEvents(button1, [this.correctClickEvent], this.eventHandlers.button1Clicked, false);
-        this.unbindEvents(button2, [this.correctClickEvent], this.eventHandlers.button2Clicked, false);
+            context.unbindEvents(button1, [context.correctClickEvent], context.eventHandlers.button1Clicked, false);
+            context.unbindEvents(button2, [context.correctClickEvent], context.eventHandlers.button2Clicked, false);
+        });
+        
         this.buttonsBound = 0;
     },
 
@@ -422,7 +449,7 @@ backGesturer.prototype = {
             buttonWrapperWidth = this.currentElement.parentElement.querySelector(".backgesture-button-wrapper").clientWidth,
             snapTo = -currentAmount > (buttonWrapperWidth/2) ? (-buttonWrapperWidth-1) : 0;
 
-        this.snapToCoordinates(contentWrapper, snapTo, currentAmount);
+        this.snapToPosition(contentWrapper, snapTo, currentAmount, this.afterSingleElementSnapped);
     },
 
     getCurrentMoveAmount: function(elem) {
@@ -457,23 +484,24 @@ backGesturer.prototype = {
     },
     
     launchOnMoveEndCallback: function() {
+        //console.log("onMoveEndCallback");
         if(this.options.onMoveEnd) {
-            //console.log("onMoveEndCallback");
             this.options.onMoveEnd.call(this.currentElement.parentElement);
         }
     },
     
     launchOnMoveStartCallback: function() {
-        if(this.options.onMoveStart && !this.onMoveStartCalled) {
-            //console.log("onMoveStartCallback");
-            this.options.onMoveStart.call(this.currentElement.parentElement);
+        if(!this.onMoveStartCalled) {
+            if(this.options.onMoveStart) {
+                this.options.onMoveStart.call(this.currentElement.parentElement);
+            }
             this.onMoveStartCalled = 1;
         }
     },
     
     launchOnMoveResetCallback: function() {
-        if(this.options.onMoveReset) {
-            //console.log("onMoveResetCallback");
+        //console.log("onMoveResetCallback");
+        if(this.options.onMoveReset) {    
             this.options.onMoveReset.call(this.currentElement.parentElement);
         }
     },
@@ -517,7 +545,7 @@ backGesturer.prototype = {
             correctAmount = curAmount + (Math.abs(amount) > 5 ? amount/1.3 : amount);
         
         if(Math.abs(amount) > 70 && correctAmount < 0) {
-            this.snapToCoordinates(contentWrapper, correctAmount, curAmount);
+            this.snapToPosition(contentWrapper, correctAmount, curAmount, this.afterSingleElementSnapped);
         }   
         //If user is dragging to the left
         if(curAmount >= 0 && correctAmount >= 0) {
@@ -546,8 +574,14 @@ backGesturer.prototype = {
     resetCurrentElement: function(callback) {
         if(this.currentElement) {
             var currentElemContentWrapper = this.currentElement,
-            currentX = this.getCurrentMoveAmount(currentElemContentWrapper);
-            this.snapToCoordinates(currentElemContentWrapper, 0, currentX, callback);
+            currentX = this.getCurrentMoveAmount(currentElemContentWrapper),
+            context = this;
+            this.snapToPosition(currentElemContentWrapper, 0, currentX, function afterCurrentElementSnapped(elementReset){
+                context.afterSingleElementSnapped(elementReset);
+                if(callback) {
+                    callback.call();
+                }
+            });
         }else {
             if (callback) {
                 callback.call();
@@ -564,6 +598,92 @@ backGesturer.prototype = {
         this.launchOnMoveResetCallback();
     },
 
+    animElements: function(action, index, type, callback) {
+                    //no arguments, reveal all
+        var elems = !index ? this.elems :
+                    //single index
+                    typeof index === "number" ? [this.elems[index]] : 
+                    //Array of indexes
+                    typeof index === "object" ? index : false,
+                    context = this,
+                    waveInterval,
+                    contentWrappers = [];
+
+        if(!elems) {
+            return console.error("erroneous arguments for backGesturer.animElements");
+        }
+        //Array of indexes from the elements
+        if(typeof index === "object") {
+            elems = [];
+            for(var idx in index) {
+                elems.push(this.elems[index[idx]]);
+            }
+        }
+
+        //Convert to array
+        elems = Array.prototype.slice.call(elems);
+
+        elems.forEach(function(elem) {
+            contentWrappers.push(elem.querySelector(".backgesture-content-wrapper"));
+        });
+
+        //Bind buttons
+        if(action === "reveal") {
+            context.bindButtons(contentWrappers); 
+        }else {
+            context.unbindButtons(contentWrappers); 
+        }
+        
+
+        var snapElement = function() {
+            var elem = contentWrappers.length ? contentWrappers.shift() : false,
+                snapCallback;
+            //No more elems
+            if(!elem) {
+                return callback ? callback.call() : true;
+            }
+
+            console.dir(elem);
+            var targetX = action === "reveal" ? elem.parentElement.querySelector(".backgesture-button-wrapper").clientWidth :
+                                                0,
+                currentPosition = context.getCurrentMoveAmount(elem);
+            if(!type) {
+                snapCallback = snapElement;
+            }
+            context.snapToPosition(elem, -targetX, currentPosition, snapCallback);
+            
+        };
+        snapElement();
+
+
+        if(type === "wave") {
+            if(!waveInterval) {
+                waveInterval = window.setInterval( function next() {
+                    if(contentWrappers.length) {
+                       snapElement(); 
+                    }else {
+                        window.clearInterval(waveInterval);
+                        if(callback) {
+                            callback.call();
+                        }
+
+                    }
+                }, 75);
+            }
+        }
+        
+
+    },
+
+    revealElements: function(index, type, callback) {
+        this.animElements("reveal", index, type, callback);
+
+    },
+
+    unrevealElements: function(index, type, callback) {
+        this.animElements("unreveal", index, type, callback);
+    },
+
     setCoords: function(x, y, start) {
         if(!start) {
             this.currentX = x;
@@ -574,7 +694,7 @@ backGesturer.prototype = {
         }
     },
 
-    snapToCoordinates: function(elem, targetX, currentX, callback) {
+    snapToPosition: function(elem, targetX, currentX, callback) {
         var that = elem,
             context = this;
 
@@ -592,18 +712,10 @@ backGesturer.prototype = {
             }else {
                 //Will attach eventlisteners again
                 context.isTranslating = 0;
-                //Reset the current and start coordinates if snapping to default position
-                //Else bind the buttons
-                if(targetX === 0) {
-                    context.resetState();
-                }else {
-                    context.bindButtons();
-                }
                 
                 if(callback) {
-                    callback.call();
+                    callback.apply(context, [(targetX === 0)]);
                 }
-                context.launchOnMoveEndCallback();
                 
                 return;
             }

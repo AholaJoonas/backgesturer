@@ -29,4 +29,22 @@
         onMoveStart: function() {scroll.disable();},
         onMoveEnd: function() {scroll.enable();}
     });
+    var buttons = document.querySelectorAll(".test-reveal"),
+    	handleButtonClick = function(evt) {
+    		evt.preventDefault();
+    		console.log(this);
+    		if(this.className.match("reveal-unreveal-wave")) {
+    			backgest.revealElements(false, "wave", function(){ backgest.unrevealElements(false, "wave") });
+    		}else if(this.className.match("reveal-unreveal1")) {
+    			backgest.revealElements(false, false, function(){ backgest.unrevealElements(false) });
+    		}else if(this.className.match("reveal1")) {
+    			backgest.revealElements(false);
+    		}else if(this.className.match("reveal-wave")) {
+    			backgest.revealElements(false, "wave");
+    		}
+    	}
+    for(var i = 0; i < buttons.length; i++) {
+    	buttons[i].addEventListener("touchend", handleButtonClick);
+    	buttons[i].addEventListener("click", handleButtonClick);
+    }
 }() );

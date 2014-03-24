@@ -1,6 +1,7 @@
 #backgesturer
 
-iOS-styled back-gestures to elements, aimed for webapps
+iOS-styled back-gestures to elements, aimed for webapps.
+__Please note that if the elements you create backgesturer on has min-height set, backgesturer doesn't work properly! [browserbug](https://bugs.webkit.org/show_bug.cgi?id=26559)__
 
 Usage:
 

@@ -1,0 +1,51 @@
+/* line 2, ../../sass/backgesturer.scss */
+.backgesture-content-wrapper {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  background-color: inherit;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/* line 15, ../../sass/backgesturer.scss */
+.backgesture-button-wrapper {
+  position: absolute;
+  z-index: 1;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 150px;
+}
+/* line 22, ../../sass/backgesturer.scss */
+.backgesture-button-wrapper .backgesture-button {
+  display: inline-block;
+  vertical-align: middle;
+  height: 100%;
+  width: 50%;
+  position: relative;
+  background: grey;
+}
+/* line 29, ../../sass/backgesturer.scss */
+.backgesture-button-wrapper .backgesture-button span {
+  position: absolute;
+  margin: auto;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 20px;
+  text-align: center;
+}
+/* line 41, ../../sass/backgesturer.scss */
+.backgesture-button-wrapper .backgesture-button1 {
+  background-color: #8eb5e2;
+}
+/* line 45, ../../sass/backgesturer.scss */
+.backgesture-button-wrapper .backgesture-button2 {
+  background-color: #e56c69;
+}

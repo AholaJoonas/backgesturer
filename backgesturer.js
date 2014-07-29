@@ -73,7 +73,8 @@ function backGesturer(elems, options) {
             evt.preventDefault();
             var context = thisRef,
                 startX = context.getCoordinatesFromEvent(evt, "x"),
-                startY = context.getCoordinatesFromEvent(evt, "y");
+                startY = context.getCoordinatesFromEvent(evt, "y"),
+                currentAmount = context.currentElement ? context.getCurrentMoveAmount(context.currentElement) : 0;
                 
             //If element is "snapping"
             if(context.isTranslating) {
@@ -82,7 +83,7 @@ function backGesturer(elems, options) {
             
             //An element is already translated, reset it first
             //But not if it is the current node, ie. if user is clicking the buttons
-            if(context.currentX && context.currentX !== 0 && (!this.isEqualNode(context.currentElement) && context.getCurrentMoveAmount(context.currentElement) !== 0) ) {
+            if(context.currentX && context.currentX !== 0 && (!this.isEqualNode(context.currentElement) && currentAmount !== 0) ) {
                 return context.resetCurrentElement();
             }
             
@@ -92,7 +93,10 @@ function backGesturer(elems, options) {
                     return console.log("onBeforeMove returned false, not proceeding");
                 }
             }
-
+            //Set a flag indicating that this is an element that had it's buttons already exposed
+            if(currentAmount) {
+                context.draggedElement = true;
+            }
             //Save a reference to this DOM-element
             context.currentElement = this;
 
@@ -131,10 +135,22 @@ function backGesturer(elems, options) {
                 amountMoved = dirPrefix+amountMoved;
                 
             //If user has moved on Y-axel too much, lock down until the end-event   
-            if(evt.timeStamp - context.stStamp < 100 && !correctDir && isClick) {
+            if(evt.timeStamp - context.stStamp < 100 && !correctDir && isClick){
                 //console.log("locking transitions, too much Y");
-                context.isLocked = 1;
+                return context.isLocked = 1;
 
+            }
+            if(context.startX - currentX < 0 && !context.draggedElement) {
+                var curAmount = context.getCurrentMoveAmount(context.currentElement);
+                console.log("user swiping wrong direction, locking");
+                if(curAmount !== 0) {
+                    return context.snapToPosition(context.currentElement, 0, curAmount, function(elementResetted) {
+                        
+                            //context.launchOnMoveResetCallback();
+                        
+                    })
+                }
+                return context.isLocked = 1;
             }
             
             if(!isClick && !context.isTranslating && Math.abs(amountMoved) > 0) {
@@ -150,7 +166,7 @@ function backGesturer(elems, options) {
         },
 
         onMoveEnd: function(evt) {
-            //console.log("onMoveEnd");
+            console.log("onMoveEnd");
             var context = thisRef,
                 isClick = evt.timeStamp - context.stStamp < 150 && Math.abs(context.startX - context.getCoordinatesFromEvent(evt, "x")) < 5;
                 
@@ -160,9 +176,10 @@ function backGesturer(elems, options) {
             }
             context.unbindEvents(window, context.stopEvents, context.eventHandlers.onMoveEnd, false);
             
+            //Reset flags
+            context.draggedElement = 0;
             if(context.isLocked) {
                 context.isLocked = 0;
-                return;
             }
             if(!isClick) {
                 context.determineWhichSnap();
@@ -401,7 +418,11 @@ backGesturer.prototype = {
 
         for(;i<l;i++) {
             var e = this.elems[i].querySelector(".backgesture-content-wrapper");
-            this.unbindEvents(e, this.startEvents, this.eventHandlers.onMoveStart, false);
+            //if it doesn't exist, its probably removed from the DOM
+            if(e) {
+                this.unbindEvents(e, this.startEvents, this.eventHandlers.onMoveStart, false);
+            }
+            
         }
         //If currentelement is set, remove its handlers
         if(this.currentElement) {
@@ -590,6 +611,7 @@ backGesturer.prototype = {
     },
 
     resetState: function() {
+        _c.log("resetState");
         this.setCoords(0,0);
         this.setCoords(0,0, true);
         this.unbindButtons();
